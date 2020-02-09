@@ -3,8 +3,10 @@ package com.jofiagtech.testlocation;
 import android.Manifest;
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
+import android.os.Build;
 import android.os.Bundle;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -50,6 +52,8 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
         mPermissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
         mPermissions.add(Manifest.permission.ACCESS_COARSE_LOCATION);
 
+        mPermissionsToRequest = addPermissionsNotRequestedYet(mPermissions);
+
         mClient = new GoogleApiClient.Builder(this)
                 .addApi(LocationServices.API)
                 .addConnectionCallbacks(this)
@@ -66,6 +70,24 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
                         .setAction("Action", null).show();
             }
         });
+    }
+
+    private ArrayList<String> addPermissionsNotRequestedYet(ArrayList<String> permissionsNeeded) {
+        ArrayList<String> result = new ArrayList<>();
+
+        for (String permission : permissionsNeeded){
+            if (!isGrantedPermission(permission))
+                result.add(permission);
+        }
+
+        return result;
+    }
+
+    private boolean isGrantedPermission(String permission) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            return checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED;
+
+        return true;
     }
 
     @Override
