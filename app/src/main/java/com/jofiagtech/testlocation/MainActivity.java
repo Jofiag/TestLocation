@@ -90,6 +90,30 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
         return true;
     }
 
+    private void checkLocationServices(){
+        int errorCode = GoogleApiAvailability.getInstance()
+                .isGooglePlayServicesAvailable(this);
+
+        if (errorCode != ConnectionResult.SUCCESS){
+            Dialog errorDialog = GoogleApiAvailability.getInstance()
+                    .getErrorDialog(this, errorCode, errorCode,
+                            new DialogInterface.OnCancelListener() {
+                                @Override
+                                public void onCancel(DialogInterface dialog) {
+                                    Toast.makeText(MainActivity.this, "No services",
+                                            Toast.LENGTH_LONG).show();
+
+                                    finish();
+                                }
+                            });
+
+            errorDialog.show();
+        }
+        else
+            Toast.makeText(MainActivity.this, "Services are good !",
+                    Toast.LENGTH_LONG).show();
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu)
     {
@@ -115,71 +139,60 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+
+        if(mClient != null)
+            mClient.connect();
+    }
+
+    @Override
     protected void onPostResume() {
         super.onPostResume();
 
-        int errorCode = GoogleApiAvailability.getInstance()
-                .isGooglePlayServicesAvailable(this);
-
-        if (errorCode != ConnectionResult.SUCCESS){
-            Dialog errorDialog = GoogleApiAvailability.getInstance()
-                    .getErrorDialog(this, errorCode, errorCode,
-                            new DialogInterface.OnCancelListener() {
-                                @Override
-                                public void onCancel(DialogInterface dialog) {
-                                    Toast.makeText(MainActivity.this, "No services",
-                                            Toast.LENGTH_LONG).show();
-
-                                    finish();
-                                }
-                            });
-
-            errorDialog.show();
-        }
-        else
-            Toast.makeText(MainActivity.this, "Services are good !",
-                    Toast.LENGTH_LONG).show();
+        checkLocationServices();
     }
 
     @Override
-    public void onLocationChanged(Location location)
-    {
+    protected void onStop() {
+        super.onStop();
+
+        if (mClient != null && mClient.isConnected())
+            mClient.disconnect();
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
 
     }
 
     @Override
-    public void onStatusChanged(String provider, int status, Bundle extras)
-    {
+    public void onStatusChanged(String provider, int status, Bundle extras) {
 
     }
 
     @Override
-    public void onProviderEnabled(String provider)
-    {
+    public void onProviderEnabled(String provider) {
 
     }
 
     @Override
-    public void onProviderDisabled(String provider)
-    {
+    public void onProviderDisabled(String provider) {
 
     }
 
     @Override
-    public void onConnected(@Nullable Bundle bundle)
-    {
+    public void onConnected(@Nullable Bundle bundle) {
 
     }
 
     @Override
-    public void onConnectionSuspended(int i)
-    {
+    public void onConnectionSuspended(int i) {
 
     }
 
     @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult)
-    {
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
     }
 }
