@@ -15,6 +15,7 @@ import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -37,12 +38,15 @@ import java.util.ArrayList;
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
 GoogleApiClient.OnConnectionFailedListener, LocationListener {
 
+    private static final long LOCATION_FREQUENCE = 5000; //5 seconds
+    private static final long LOCATION_FASTEST_FREQUENCE = 5000; //5 seconds
     private GoogleApiClient mClient;
     private FusedLocationProviderClient mFusedLocationProviderClient;
     private ArrayList<String> mPermissionsToRequest;
     private ArrayList<String> mPermissions = new ArrayList<>();
     private ArrayList<String> mPermissionsRejected = new ArrayList<>();
     private TextView locationText;
+    private LocationRequest mLocationRequest;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -224,6 +228,26 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
                     }
                 });
 
+        //Track the location / get the location instantly / get the location whenever it changes
+        startLocationUpdates();
+
+    }
+
+    private void startLocationUpdates() {
+        String fineLocationAccess = Manifest.permission.ACCESS_FINE_LOCATION;
+        String coarseLocationAccess = Manifest.permission.ACCESS_COARSE_LOCATION;
+        int accessGranted = PackageManager.PERMISSION_GRANTED;
+
+        mLocationRequest = new LocationRequest();
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        mLocationRequest.setInterval(LOCATION_FREQUENCE);
+        mLocationRequest.setFastestInterval(LOCATION_FASTEST_FREQUENCE);
+
+        if (ActivityCompat.checkSelfPermission(this, fineLocationAccess) != accessGranted &&
+                ActivityCompat.checkSelfPermission(this, coarseLocationAccess) != accessGranted){
+            Toast.makeText(MainActivity.this, "You need to admit permission to display the location",
+                    Toast.LENGTH_LONG).show();
+        }
     }
 
     @Override
