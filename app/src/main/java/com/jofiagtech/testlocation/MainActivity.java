@@ -1,6 +1,7 @@
 package com.jofiagtech.testlocation;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
@@ -15,6 +16,7 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -22,10 +24,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
 
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -38,6 +42,7 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
     private ArrayList<String> mPermissionsToRequest;
     private ArrayList<String> mPermissions = new ArrayList<>();
     private ArrayList<String> mPermissionsRejected = new ArrayList<>();
+    private TextView locationText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -46,6 +51,8 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        locationText = findViewById(R.id.location_text);
 
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(MainActivity.this);
 
@@ -196,6 +203,26 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
+        //Check if permission is granted before access to location
+        String fineLocationAccess = Manifest.permission.ACCESS_FINE_LOCATION;
+        String coarseLocationAccess = Manifest.permission.ACCESS_COARSE_LOCATION;
+        int accessGranted = PackageManager.PERMISSION_GRANTED;
+
+        if (ActivityCompat.checkSelfPermission(this, fineLocationAccess) != accessGranted &&
+            ActivityCompat.checkSelfPermission(this, coarseLocationAccess) != accessGranted){
+            return;
+        }
+
+        mFusedLocationProviderClient.getLastLocation().addOnSuccessListener(this,
+                new OnSuccessListener<Location>() {
+                    @Override
+                    public void onSuccess(Location location) {
+                        //Get the last location if nonnull
+                        if (location != null){
+                            locationText.setText(String.format("Lat:%sLon: %s", location.getLatitude(), location.getLongitude()));
+                        }
+                    }
+                });
 
     }
 
