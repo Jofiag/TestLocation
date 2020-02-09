@@ -1,5 +1,6 @@
 package com.jofiagtech.testlocation;
 
+import android.Manifest;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.location.Location;
@@ -9,6 +10,7 @@ import android.os.Bundle;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
@@ -23,10 +25,16 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
 GoogleApiClient.OnConnectionFailedListener, LocationListener {
 
     private GoogleApiClient mClient;
+    private FusedLocationProviderClient mFusedLocationProviderClient;
+    private ArrayList<String> mPermissionsToRequest;
+    private ArrayList<String> mPermissions = new ArrayList<>();
+    private ArrayList<String> mPermissionsRejected = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -35,6 +43,12 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(MainActivity.this);
+
+        //Permissions needed to request location
+        mPermissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        mPermissions.add(Manifest.permission.ACCESS_COARSE_LOCATION);
 
         mClient = new GoogleApiClient.Builder(this)
                 .addApi(LocationServices.API)
