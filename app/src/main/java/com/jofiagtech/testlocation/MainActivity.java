@@ -13,6 +13,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
@@ -151,6 +152,18 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
         super.onPostResume();
 
         checkLocationServices();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        if (mClient != null && mClient.isConnected()){
+            LocationServices.getFusedLocationProviderClient(this)
+                    .removeLocationUpdates(new LocationCallback());
+
+            mClient.disconnect();
+        }
     }
 
     @Override
