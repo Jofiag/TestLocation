@@ -14,8 +14,10 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationAvailability;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -222,9 +224,7 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
                     @Override
                     public void onSuccess(Location location) {
                         //Get the last location if nonnull
-                        if (location != null){
-                            locationText.setText(String.format("Lat:%sLon: %s", location.getLatitude(), location.getLongitude()));
-                        }
+                        setLocationTextView(location);
                     }
                 });
 
@@ -232,7 +232,12 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
         startLocationUpdates();
 
     }
+    private void setLocationTextView(Location location){
+        if (location != null)
+            locationText.setText(String.format("Lat:%sLon: %s", location.getLatitude(), location.getLongitude()));
+    }
 
+    //Track the location / get the location instantly / get the location whenever it changes
     private void startLocationUpdates() {
         String fineLocationAccess = Manifest.permission.ACCESS_FINE_LOCATION;
         String coarseLocationAccess = Manifest.permission.ACCESS_COARSE_LOCATION;
@@ -243,10 +248,34 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
         mLocationRequest.setInterval(LOCATION_FREQUENCE);
         mLocationRequest.setFastestInterval(LOCATION_FASTEST_FREQUENCE);
 
-        if (ActivityCompat.checkSelfPermission(this, fineLocationAccess) != accessGranted &&
-                ActivityCompat.checkSelfPermission(this, coarseLocationAccess) != accessGranted){
+        boolean locationPermissionsNotGranted = ActivityCompat.checkSelfPermission(this, fineLocationAccess) != accessGranted &&
+                ActivityCompat.checkSelfPermission(this, coarseLocationAccess) != accessGranted;
+
+        boolean locationPermissionsGranted = ActivityCompat.checkSelfPermission(this, fineLocationAccess) == accessGranted &&
+                ActivityCompat.checkSelfPermission(this, coarseLocationAccess) == accessGranted;
+
+        if (locationPermissionsNotGranted){
             Toast.makeText(MainActivity.this, "You need to admit permission to display the location",
                     Toast.LENGTH_LONG).show();
+        }
+        else if (locationPermissionsGranted) {
+            LocationServices.getFusedLocationProviderClient(MainActivity.this)
+                    .requestLocationUpdates(mLocationRequest, new LocationCallback(){
+                        @Override
+                        public void onLocationResult(LocationResult locationResult) {
+                            super.onLocationResult(locationResult);
+
+                            if (locationResult != null){
+                                Location location = locationResult.getLastLocation();
+                                setLocationTextView(location);
+                            }
+                        }
+
+                        @Override
+                        public void onLocationAvailability(LocationAvailability locationAvailability) {
+                            super.onLocationAvailability(locationAvailability);
+                        }
+                    }, null);
         }
     }
 
