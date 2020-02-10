@@ -248,17 +248,19 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
         mLocationRequest.setInterval(LOCATION_FREQUENCE);
         mLocationRequest.setFastestInterval(LOCATION_FASTEST_FREQUENCE);
 
-        boolean locationPermissionsNotGranted = ActivityCompat.checkSelfPermission(this, fineLocationAccess) != accessGranted &&
+        boolean locationAccessNotGranted =
+                ActivityCompat.checkSelfPermission(this, fineLocationAccess) != accessGranted &&
                 ActivityCompat.checkSelfPermission(this, coarseLocationAccess) != accessGranted;
 
-        boolean locationPermissionsGranted = ActivityCompat.checkSelfPermission(this, fineLocationAccess) == accessGranted &&
+        boolean locationAccessGranted =
+                ActivityCompat.checkSelfPermission(this, fineLocationAccess) == accessGranted &&
                 ActivityCompat.checkSelfPermission(this, coarseLocationAccess) == accessGranted;
 
-        if (locationPermissionsNotGranted){
+        if (locationAccessNotGranted){
             Toast.makeText(MainActivity.this, "You need to admit permission to display the location",
                     Toast.LENGTH_LONG).show();
         }
-        else if (locationPermissionsGranted) {
+        else if (locationAccessGranted) {
             LocationServices.getFusedLocationProviderClient(MainActivity.this)
                     .requestLocationUpdates(mLocationRequest, new LocationCallback(){
                         @Override
