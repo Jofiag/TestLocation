@@ -316,7 +316,12 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
                                 .dismiss();
                     }
                 }
-
+                //If location permissions are granted, then connect the client.
+                //When the client is connected, the function onConnected() is called.
+                else{
+                    if (mClient != null)
+                        mClient.connect();
+                }
                 break;
         }
     }
