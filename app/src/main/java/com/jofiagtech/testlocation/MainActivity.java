@@ -2,6 +2,7 @@ package com.jofiagtech.testlocation;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
@@ -42,6 +43,7 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
 
     private static final long LOCATION_FREQUENCE = 5000; //5 seconds
     private static final long LOCATION_FASTEST_FREQUENCE = 5000; //5 seconds
+    private static final int ALL_PERMISSION_RESULT = 1;
     private GoogleApiClient mClient;
     private FusedLocationProviderClient mFusedLocationProviderClient;
     private ArrayList<String> mPermissionsToRequest;
@@ -98,7 +100,7 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
     }
 
     private boolean isGrantedPermission(String permission) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) //Allow lower SDK support
             return checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED;
 
         return true;
@@ -207,7 +209,7 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
 
     }
 
-    @Override
+    @Override //It's here we get the location if the  permissions are granted.
     public void onConnected(@Nullable Bundle bundle) {
         //Check if permission is granted before access to location
         String fineLocationAccess = Manifest.permission.ACCESS_FINE_LOCATION;
@@ -229,9 +231,11 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
                 });
 
         //Track the location / get the location instantly / get the location whenever it changes
+        //Here we get the location every 5 seconds
         startLocationUpdates();
 
     }
+
     private void setLocationTextView(Location location){
         if (location != null)
             locationText.setText(String.format("Lat:%sLon: %s", location.getLatitude(), location.getLongitude()));
@@ -278,6 +282,42 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
                             super.onLocationAvailability(locationAvailability);
                         }
                     }, null);
+        }
+    }
+
+    //Get the access that are not granted
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        final int size = mPermissionsRejected.size();
+
+        switch (requestCode){
+            case ALL_PERMISSION_RESULT:
+                for (String permission : mPermissionsToRequest){
+                    if (!isGrantedPermission(permission))
+                        mPermissionsRejected.add(permission);
+                }
+
+                //If permission is not granted then show in a dialog why the permission is needed. And request it.
+                if (size > 0){
+                    if (shouldShowRequestPermissionRationale(mPermissionsRejected.get(0))){
+                        new AlertDialog.Builder(MainActivity.this)
+                                .setMessage("This permission is mandatory to get location")
+                                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                                            requestPermissions(mPermissionsRejected.toArray(new String[size]),
+                                                ALL_PERMISSION_RESULT);
+                                    }
+                                })
+                                .setNegativeButton("cancel", null)
+                                .create()
+                                .dismiss();
+                    }
+                }
+
+                break;
         }
     }
 
