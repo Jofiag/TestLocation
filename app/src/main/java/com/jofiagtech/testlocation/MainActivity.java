@@ -1,7 +1,6 @@
 package com.jofiagtech.testlocation;
 
 import android.Manifest;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
@@ -41,8 +40,9 @@ import java.util.ArrayList;
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
 GoogleApiClient.OnConnectionFailedListener, LocationListener {
 
-    private static final long LOCATION_FREQUENCE = 5000; //5 seconds
-    private static final long LOCATION_FASTEST_FREQUENCE = 5000; //5 seconds
+    private static final long LOCATION_FREQUENCY = 5000; //5 seconds
+    private static final long LOCATION_FASTEST_FREQUENCY = 5000; //5 seconds
+    private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000 ;
     private static final int ALL_PERMISSION_RESULT = 1;
     private GoogleApiClient mClient;
     private FusedLocationProviderClient mFusedLocationProviderClient;
@@ -80,8 +80,8 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
 
         mClient = new GoogleApiClient.Builder(this)
                 .addApi(LocationServices.API)
-                .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
+                .addConnectionCallbacks(this)
                 .build();
 
         FloatingActionButton fab = findViewById(R.id.fab);
@@ -110,6 +110,23 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
     private boolean isGrantedPermission(String permission) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) //Allow lower SDK support
             return checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED;
+
+        return true;
+    }
+
+    private boolean checkLocationServicess() {
+        GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
+        int resultCode = apiAvailability.isGooglePlayServicesAvailable(this);
+
+        if (resultCode != ConnectionResult.SUCCESS) {
+            if (apiAvailability.isUserResolvableError(resultCode)) {
+                apiAvailability.getErrorDialog(this, resultCode, PLAY_SERVICES_RESOLUTION_REQUEST);
+            } else {
+                finish();
+            }
+
+            return false;
+        }
 
         return true;
     }
@@ -175,6 +192,8 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
         super.onPostResume();
 
         checkLocationServices();
+        /*if (checkLocationServicess())
+            locationText.setText("Please install GooglePlay");*/
     }
 
     @Override
@@ -183,7 +202,7 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
 
         if (mClient != null && mClient.isConnected()){
             LocationServices.getFusedLocationProviderClient(this)
-                    .removeLocationUpdates(new LocationCallback());
+                    .removeLocationUpdates(new LocationCallback(){});
 
             mClient.disconnect();
         }
@@ -193,7 +212,7 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
     protected void onStop() {
         super.onStop();
 
-        if (mClient != null && mClient.isConnected())
+        if (mClient != null )//&& mClient.isConnected())
             mClient.disconnect();
     }
 
@@ -229,7 +248,8 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
             return;
         }
 
-        mFusedLocationProviderClient.getLastLocation().addOnSuccessListener(this,
+        mFusedLocationProviderClient.getLastLocation()
+                .addOnSuccessListener(this,
                 new OnSuccessListener<Location>() {
                     @Override
                     public void onSuccess(Location location) {
@@ -257,8 +277,8 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
 
         mLocationRequest = new LocationRequest();
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        mLocationRequest.setInterval(LOCATION_FREQUENCE);
-        mLocationRequest.setFastestInterval(LOCATION_FASTEST_FREQUENCE);
+        mLocationRequest.setInterval(LOCATION_FREQUENCY);
+        mLocationRequest.setFastestInterval(LOCATION_FASTEST_FREQUENCY);
 
         boolean locationAccessNotGranted =
                 ActivityCompat.checkSelfPermission(this, fineLocationAccess) != accessGranted &&
@@ -272,7 +292,7 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
             Toast.makeText(MainActivity.this, "You need to admit permission to display the location",
                     Toast.LENGTH_LONG).show();
         }
-        else if (locationAccessGranted) {
+        //else if (locationAccessGranted) {
             LocationServices.getFusedLocationProviderClient(MainActivity.this)
                     .requestLocationUpdates(mLocationRequest, new LocationCallback(){
                         @Override
@@ -290,14 +310,13 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
                             super.onLocationAvailability(locationAvailability);
                         }
                     }, null);
-        }
+        //}
     }
 
     //Get the access that are not granted
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        final int size = mPermissionsRejected.size();
 
         switch (requestCode){
             case ALL_PERMISSION_RESULT:
@@ -307,22 +326,26 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
                 }
 
                 //If permission is not granted then show in a dialog why the permission is needed. And request it.
-                if (size > 0){
-                    if (shouldShowRequestPermissionRationale(mPermissionsRejected.get(0))){
-                        new AlertDialog.Builder(MainActivity.this)
-                                .setMessage("This permission is mandatory to get location")
-                                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-                                            requestPermissions(mPermissionsRejected.toArray(new String[size]),
-                                                ALL_PERMISSION_RESULT);
-                                    }
-                                })
-                                .setNegativeButton("cancel", null)
-                                .create()
-                                .dismiss();
+                if (mPermissionsRejected.size() > 0){
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+                        if (shouldShowRequestPermissionRationale(mPermissionsRejected.get(0))){
+                            new AlertDialog.Builder(MainActivity.this)
+                                    .setMessage("These permissions are mandatory to get location")
+                                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                                                requestPermissions(mPermissionsRejected.toArray(
+                                                        new String[mPermissionsRejected.size()]),
+                                                        ALL_PERMISSION_RESULT);
+                                        }
+                                    })
+                                    .setNegativeButton("Cancel", null)
+                                    .create()
+                                    .show();
+                        }
                     }
+
                 }
                 //If location permissions are granted, then connect the client.
                 //When the client is connected, the function onConnected() is called.
