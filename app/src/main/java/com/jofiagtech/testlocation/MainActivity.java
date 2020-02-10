@@ -70,6 +70,14 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
 
         mPermissionsToRequest = addPermissionsNotRequestedYet(mPermissions);
 
+        //Request permission
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+            if (mPermissionsToRequest.size() > 0){
+                requestPermissions(mPermissionsToRequest.toArray(new String[mPermissionsToRequest.size()]),
+                        ALL_PERMISSION_RESULT);
+            }
+        }
+
         mClient = new GoogleApiClient.Builder(this)
                 .addApi(LocationServices.API)
                 .addConnectionCallbacks(this)
@@ -191,7 +199,7 @@ GoogleApiClient.OnConnectionFailedListener, LocationListener {
 
     @Override
     public void onLocationChanged(Location location) {
-
+        setLocationTextView(location);
     }
 
     @Override
